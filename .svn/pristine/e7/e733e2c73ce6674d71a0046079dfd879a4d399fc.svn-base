@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui-for-work.min.css">
+		<link rel="stylesheet" href="https://cdn.bootcss.com/weui/1.1.2/style/weui.min.css">
+		<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
+		<script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+	</head>
+	<body>
+		<div class="weui-panel weui-panel_access" >
+		    <div class="weui-panel__bd">
+		        <div class="weui-media-box weui-media-box_text">
+		            <h4 class="weui-media-box__title" ><span id="title"></span></h4>
+		            <p class="weui-media-box__desc" >发件人：<span id="creator"></span></p>
+		            <p class="weui-media-box__desc" >收件人：<span id="receivers"></span></p>
+		            <p class="weui-media-box__desc" >发送时间：<span id="sendtime"></span></p>
+		        </div>
+	        	<div class="weui-media-box" id=attaches>
+	        	
+	        	</div>
+		        <div class="weui-media-box weui-media-box_text" id="emailcontent" style="overflow: scroll; margin-bottom: 50px">
+		        	
+		        </div>
+		    </div>
+		    <input type="hidden" id="emailacptid">
+		</div>
+		<div class="weui-tabbar" style="position:fixed; bottom: 0;">
+	        <a href="javascript:forward();" class="weui-tabbar__item">
+	            <img src="/icons/forward2.png" alt="" class="weui-tabbar__icon">
+	            <p class="weui-tabbar__label">转发</p>
+	        </a>
+	        <a href="javascript:del();" class="weui-tabbar__item">
+	            <img src="/icons/delete1.png" alt="" class="weui-tabbar__icon">
+	            <p class="weui-tabbar__label">删除</p>
+	        </a>
+	        <a href="javascript:receive();" class="weui-tabbar__item">
+	            <img src="/icons/reply2.png" alt="" class="weui-tabbar__icon">
+	            <p class="weui-tabbar__label">回复</p>
+	        </a>
+	    </div>
+	</body>
+	<script type="text/javascript">
+	
+		var email;
+		var emailid;
+		var emailacpt;
+		var emailacptid;
+		
+		$(function(){
+			var paramstr = location.search;
+			var params = {};
+			if (paramstr.indexOf('?' != -1)) {
+				var paramstr = paramstr.substr(1);
+				var strArr = paramstr.split('&');
+				$.each(strArr, function(index, str) {
+					params[str.split('=')[0]] = str.split('=')[1]
+				});
+			}
+			emailid = params.emailid || 0;
+			emailacptid = params.emailacptid || 0;
+			getEmail();
+		});
+		
+		function getEmail() {
+			$.ajax({
+				url : "/api/email/getemail",
+				type : "POST",
+				async : true,
+				data : {
+					emailid: emailid,
+					emailacptid: emailacptid
+				},
+				success : function (retData) {
+					var retObj = $.parseJSON(retData);
+					emailacpt = retObj.emailacpt;
+					email = retObj.email;
+					var attrefs = retObj.attrefs;
+					
+					if (emailacpt && emailacpt.readflag && emailacpt.readflag != "Y") {
+						readEmail(emailacptid);
+					}
+					
+					$("#title").text(email.title);
+					$("#creator").text(email.creator);
+					$("#receivers").text(email.receivers);
+					$("#sendtime").text(email.sendtime);
+					$("#emailcontent").html(email.emailcontent);
+					
+					var downloadapi = "/api/download";
+					$.each(attrefs, function(index, attref) {
+						var downloadurl = downloadapi + "?filepath=" + attref.document.filepath + "&filename=" + attref.document.filename;
+						downloadurl = encodeURI(downloadurl);
+						var htmlStr = 
+							'<a href="' + downloadurl+ '" download="' + attref.document.filename + '">' +
+							attref.document.filename +
+							'</a><br>';
+						$("#attaches").append(htmlStr);
+					});
+				},
+				error : function (xhr, rtmsg, e) {
+				}
+			});
+		}
+	
+		//置为已读
+		function readEmail(entityid){
+			$.ajax({
+				url : "/api/email/read",
+				type : "POST",
+				async : true,
+				data : {
+					recids:entityid
+				},
+				success : function (retData) {
+					
+				},
+				error : function (xhr, rtmsg, e) {
+				}
+			});
+		}
+	    //转发
+	    function forward() {
+	    	window.location.href = 'email_new.html?entityid=' + email.id + "&optype=T";
+	    }
+	    //回复
+	    function receive() {
+	    	window.location.href = 'email_new.html?entityid=' + email.id + "&optype=R";
+	    }
+	    //删除
+	    function del() {
+	    	$.showLoading("正在删除...");
+	    	var emailacptid = $("#emailacptid").val();
+	    	$.ajax({
+				url : "/api/email/del",
+				type : "POST",
+				async : true,
+				data : {
+					ids:emailacptid,
+					flag:"RECEIVE"
+				},
+				success : function (retData) {
+					$.hideLoading();
+					if (retData.rtCode == '0') {
+						$.toast("删除失败", "forbidden");
+					} else {
+						$("#d" + emailacptid).remove();
+						$.toast("删除成功", function() {	
+	        			});
+						history.go(-1);
+					}	
+				},
+				error : function (xhr, rtmsg, e) {
+				}
+			});
+	    }
+	</script>
+</html>

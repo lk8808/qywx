@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+	<!-- 
+	  - Author(s): liukai
+	  - Date: 2018-01-02 15:04:11
+	  - Description:
+	-->
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>流程银行主页</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+		<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui-for-work.min.css">
+		<link rel="stylesheet" href="https://cdn.bootcss.com/weui/1.1.2/style/weui.min.css">
+		<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+		<style type="text/css">
+			.weui-grid__icon {
+				height: 50px;
+				width: 50px;
+			}
+		</style>
+	</head>
+	<body>
+		<div style="background: #1196EE; height: 100px">
+			<img src="icons/logo.png" align="center" style="margin: 10px">
+		</div>
+		<div class="weui-grids">
+		    <a href="javascript:todoList();" class="weui-grid js_grid">
+		        <div class="weui-grid__icon" >
+		            <img src="icons/todo.png" alt="" >
+		        </div>
+		        <p class="weui-grid__label" >
+		            待办
+		        </p>
+		    </a>
+		    <a href="javascript:finishedList();" class="weui-grid js_grid">
+		        <div class="weui-grid__icon">
+		            <img src="icons/finished.png" alt="">
+		        </div>
+		        <p class="weui-grid__label" >
+		            已办
+		        </p>
+		    </a>
+		    <a href="javascript:notice();" class="weui-grid js_grid">
+		        <div class="weui-grid__icon">
+		            <img src="icons/notice.png" alt="">
+		        </div>
+		        <p class="weui-grid__label">
+		            公告
+		        </p>
+		    </a>
+		    <a href="javascript:email();" class="weui-grid js_grid">
+		        <div class="weui-grid__icon">
+		            <img src="icons/email.png" alt="">
+		        </div>
+		        <p class="weui-grid__label" >
+		            邮件
+		        </p>
+		    </a>
+		</div>
+	</body>
+	<script type="text/javascript">
+		
+		var appId = "ww38424086b1873e3f";
+		var timestamp = "";
+		var nonceStr = "";
+		var signature = "";
+	
+		$.ajax({
+			url : "/api/verifyjs",
+			type : "POST",
+			async : false,
+			data : {
+				pageurl : "http://bzhjrt.natappfree.cc/index"
+			},
+			success : function (retData) {
+				var retObj = $.parseJSON(retData);
+				timestamp = retObj.timestamp;
+				nonceStr = retObj.noncestr;
+				signature = retObj.signature;
+			},
+			error : function (xhr, rtmsg, e) {
+				console.log(rtmsg);
+			}
+		});
+	
+		//验证权限配置
+		wx.config({
+			beta: true,
+		    debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+		    appId: appId, // 必填，公众号的唯一标识
+		    timestamp: timestamp, // 必填，生成签名的时间戳
+		    nonceStr: nonceStr, // 必填，生成签名的随机串
+		    signature: signature,// 必填，签名，见附录1
+		    jsApiList: [
+						'onMenuShareAppMessage','onMenuShareWechat','startRecord','stopRecord','onVoiceRecordEnd','playVoice','pauseVoice',
+						'stopVoice','onVoicePlayEnd','uploadVoice','downloadVoice','chooseImage','previewImage','uploadImage','downloadImage',
+						'previewFile','getNetworkType','openLocation','getLocation','onHistoryBack','hideOptionMenu','showOptionMenu',
+						'hideMenuItems','showMenuItems','hideAllNonBaseMenuItem','showAllNonBaseMenuItem','closeWindow','scanQRCode',
+						'selectEnterpriseContact','openEnterpriseChat','chooseInvoice'
+		     		   ]
+		});
+		//配置验证成功
+		wx.ready(function(){
+		    // config信息验证后会执行ready方法，所有接口调用都必须在config接口获得结果之后，config是一个客户端的异步操作，
+		    //所以如果需要在页面加载时就调用相关接口，则须把相关接口放在ready函数中调用来确保正确执行。对于用户触发时才调用的接口，则可以直接调用，不需要放在ready函数中。
+		});
+		//配置验证失败
+		wx.error(function(res){
+		    // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。
+			
+		});
+
+		
+		function todoList() {
+			window.location.href = "process/workitem_todo.html";
+		}
+
+		function finishedList() {
+			window.location.href = "process/workitem_done.html";
+		}
+
+		function notice() {
+			window.location.href = "notice/notice_list.html";
+		}
+
+		function email() {
+			window.location.href = "email/email_main.html";
+		}
+
+		
+	</script>
+</html>

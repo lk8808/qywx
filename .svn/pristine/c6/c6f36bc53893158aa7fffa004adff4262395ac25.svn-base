@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>未读邮件</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+		<link rel="stylesheet" type="text/css" href="/css/iscroll.css">
+		<link rel="stylesheet" type="text/css" href="/css/searchBox.css">
+		<script src="/javascript/iscroll.js"></script>
+		<link rel="stylesheet" href="https://cdn.bootcss.com/weui/1.1.2/style/weui.min.css">
+		<link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
+		<script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+		<style type="text/css">
+			.showSelect {
+				display: none;
+			}
+			
+			.weui-cell_swiped > .selected {
+				background-color: #EEE;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="loading"></div>
+		<div id="loadingmask"></div>
+		<div id="webHeadContainer_top">
+			<table class="webClientHeadContainer_top">
+				<tbody>
+					<tr id="menu1">	
+						<td class="centerTD_top" width="*">
+							<div id="middleBtnName_top">
+								<div id="middlePageName_top" style="display:inline-block;">未读邮件</div>
+							</div>
+						</td>
+					</tr>
+					<tr id="menu2" class="showSelect">	
+						<td class="centerTD_top" width="*">
+							<div style="height:100%">
+								<div style="display:inline-block;height: 100%;line-height: 40px;"><a onclick="selectAll();">全选</a></div>
+							</div>
+						</td>
+						<td class="centerTD_top" width="*">
+							<div id="middleBtnName_top">
+								<div id="middlePageName_top" style="display:inline-block;">未读邮件</div>
+							</div>
+						</td>
+						<td class="centerTD_top" width="*">
+							<div style="height:100%">
+								<div style="display:inline-block;height: 100%;line-height: 40px;"><a onclick="cancel();">取消</a></div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div id="searchBox" class="searchBox">
+			<div class="searchImg"></div>
+			<div style="position:absolute;left:5px;top:5px;right:10px;height:30px;background:#fff;border-radius:10px;">
+				<div style="position:absolute;top:0;left:0;right:30px;height:30px;">
+					<input id="keyword" type="search" onkeydown="keyDown(event)" class="searchInput" placeholder="输入名称查找" />
+					<input type="hidden" name="page/begin" />
+					<input type="hidden" name="page/length" />
+					<input type="hidden" name="page/count" />
+					<input type="hidden" name="page/isLast" />
+				</div>
+			</div>
+		</div>
+		<div id="scroll-wrapper">
+			<div id="scroll-scroller" >
+				<div id="pullDown">
+					<span class="pullDownIcon"></span>
+					<div class="pullDownLabel" >
+						<div class="pullDownLabel-title">下拉刷新</div>
+						<div class="pullDownLabel-time"></div>
+					</div>
+				</div>
+				<table id="page">
+					<tr>
+						<td width="100%" height="100%" valign="top" align="left">
+							<div class="list weui-cells" id="list"></div>
+							<div class="total-info"></div>
+						</td>
+					</tr>
+				</table>
+		        <div id="pullUp">
+					<span class="pullUpIcon"></span>
+					<span class="pullUpLabel">上拉加载更多</span>
+				</div>
+			</div>
+		</div>
+		<div class="weui-tabbar showSelect" style="position:absolute; bottom: 0;">
+	        <a href="javascript:delBatch();" class="weui-tabbar__item">
+	            <img src="/icons/delete1.png" alt="" class="weui-tabbar__icon">
+	            <p class="weui-tabbar__label">删除</p>
+	        </a>
+	    </div>
+		<div class="goToTop">
+			<i class="fa fa-angle-up"></i>
+		</div>
+	</body>
+	<script type="text/javascript">
+		var myScroll, pullDownEl, pullDownOffset, pullUpEl, pullUpOffset;
+		var timeOutEvent = 0; 
+		
+		function toggleSearchBox() {
+			$("#searchBox").slideToggle();
+			$("#scroll-wrapper").animate({"top" : (parseFloat($("#scroll-wrapper").css("top")) > 40 ? "40px" : "80px")});
+			myScroll.refresh();
+		}
+		
+		function load() {
+			pullDownEl = document.getElementById("pullDown");
+			pullDownOffset = pullDownEl.offsetHeight;
+			pullUpEl = document.getElementById("pullUp");
+			pullUpOffset = pullUpEl.offsetHeight;
+			
+			myScroll = new IScroll("#scroll-wrapper", {
+				useTransform: true,
+				useTransition: true,
+				scrollbars: true,
+				fadeScrollbars: true,
+				topOffset: pullDownOffset,
+				preventDefault: false
+			});
+			
+			myScroll.on("refresh", function () {
+				if (pullDownEl.className.match("loading") || pullDownEl.className.match("refresh_success")) {
+					pullDownEl.className = "";
+					pullDownEl.querySelector(".pullDownLabel-title").innerHTML = "下拉刷新";
+				} else if (pullUpEl.className.match("loading") || pullUpEl.className.match("refresh_success")) {
+					pullUpEl.className = "";
+					pullUpEl.querySelector(".pullUpLabel").innerHTML = "上拉加载更多";
+				}
+			});
+			
+			myScroll.on("scrollMove", function () {
+				if (this.y > 30 && !pullDownEl.className.match("flip")) {
+					pullDownEl.className = "flip";
+					pullDownEl.querySelector(".pullDownLabel-title").innerHTML = "释放立即刷新";
+					this.minScrollY = 0;
+				} else if (this.y < 30 && pullDownEl.className.match("flip")) {
+					pullDownEl.className = "";
+					pullDownEl.querySelector(".pullDownLabel-title").innerHTML = "下拉刷新";
+					this.minScrollY = -pullDownOffset;
+	
+				} else if (this.y < (this.minScrollY - 5) && !pullUpEl.className.match("flip")) {
+					pullUpEl.style.display = "block";
+					if (this.y < (this.minScrollY - 40)) {
+						pullUpEl.className = "flip";
+						pullUpEl.querySelector(".pullUpLabel").innerHTML = "释放立即加载";
+						this.maxScrollY = this.maxScrollY;
+						myScroll.refresh();
+					}
+				} else if (this.y > (this.maxScrollY + 5) && pullUpEl.className.match("flip")) {
+					/*
+					pullUpEl.className = "";
+					pullUpEl.querySelector(".pullUpLabel").innerHTML = "上拉加载更多";
+					*/
+				} else {
+					if (this.y < -100)
+						$(".goToTop").show();
+					else
+						$(".goToTop").hide();
+				}
+			});
+			
+			myScroll.on("scrollEnd", function () {
+				if (pullDownEl.className.match("flip")) {
+					pullDownEl.className = "loading";
+					pullDownEl.querySelector(".pullDownLabel-title").innerHTML = "正在刷新...";
+					pullDownAction();
+				} else if (pullUpEl.className.match("flip")) {
+					pullUpEl.className = "loading";
+					pullUpEl.querySelector(".pullUpLabel").innerHTML = "正在加载...";
+					pullUpAction();
+				} else {
+					pullUpEl.style.display = "none";
+					myScroll.refresh();
+				}
+				
+				if (this.y < -100)
+					$(".goToTop").show();
+				else
+					$(".goToTop").hide();
+			});
+			pullUpEl.style.display = "none";
+			myScroll.refresh();
+			document.getElementById("scroll-wrapper").style.left = "0";
+			
+		}
+		
+		$(document).ready(function() {
+			load();
+			loadList(0);
+			$(".goToTop").on("click", function() {
+				myScroll.scrollTo(0, -50, 500);
+				$(this).hide();
+			});
+			
+			$(".searchImg").on("click", function() {
+				loadList(3);
+			});
+			$('.weui-cell_swiped').swipeout();
+		});
+		
+		function pullDownAction() {
+			loadList(1);
+		}
+		
+		function pullUpAction() {
+			loadList(2);
+		}
+	
+		function keyDown(e) {
+			var ev= window.event||e;
+			if (ev.keyCode == 13){
+				loadList(3);
+			}
+		}
+		
+		function loadList(type) {
+			
+			var count = $("input[name='page/count']").val();
+			var isLast = $("input[name='page/isLast']").val();
+			
+			if (type == 2 && isLast == "true") {
+				$(".total-info").html("总共" + count + "条数据").show();
+				$("#pullUp").css("visibility", "hidden");
+				return;
+			} else {
+				$(".total-info").hide();
+				$("#pullUp").css("visibility", "visible");
+			}
+			if (type == 0 || type == 1 || type == 3) {
+				$("input[name='page/begin']").val(0);
+				$("input[name='page/length']").val(10);	
+			}
+			
+			var param = {};
+			var page = {};
+			page.begin = $("input[name='page/begin']").val() || 0;
+			page.length = $("input[name='page/length']").val() || 10;
+			page.isCount = true;
+			param.querykeyword = $("#keyword").val() || "";
+			param.menutype = "UNREAD";
+			param.page = page;
+			$.ajax({
+				url : "/api/email/list",
+				contentType: "application/json; charset=utf-8",
+				type : "POST",
+				async : true,
+				data : JSON.stringify(param),
+				dataType: "json",
+				success : function (retData) {
+					$("input[name='page/begin']").val(retData.page.begin + retData.page.length);
+					$("input[name='page/length']").val(retData.page.length);	
+					$("input[name='page/count']").val(retData.page.count);
+					$("input[name='page/isLast']").val(retData.page.isLast);	
+					
+					if (retData.page.count == 0) {
+						$(".total-info").html("没有数据").show();
+						$("#pullUp").css("visibility", "hidden");
+					}
+					//下拉刷新或查询刷新，先清空原来数据
+					if (type == 0 || type == 1 || type == 3) {
+						myScroll.scrollTo(0, -50, 0);
+						$("#list").html("");
+					}
+					var bizdatas = retData.bizdatas;
+					$.each(bizdatas, function(index, bizdata) {
+						
+						var emailacptid = bizdata.recipientid;
+						var title = bizdata.title;
+						if (title.length > 15) {
+							title = title.substring(0, 15) + "......";
+						}
+						var fromemp = bizdata.creator;
+						var facttime = bizdata.createtime;
+						facttime = facttime.substring(0, 19);
+						var htmlStr = 
+							'<div class="weui-cell weui-cell_swiped" id="d' + emailacptid + '">' +
+								'<div class="weui-cell__bd">' +
+									'<div class="weui-cell__bd">' +
+						              '<div class="weui-cell">' +
+						                '<div class="weui-cell__bd">' +
+						                 '<p>' + title + '</p>' +
+						                '</div>' +
+						                '<div class="weui-cell__ft"></div>' +
+						              '</div>' +
+						            '</div>' +
+						            '<div class="weui-cells__tips" >发件人：' + fromemp + '</div>' +
+								    '<div class="weui-cells__tips" >发送时间：' + facttime + '</div>' +
+							    '</div>' +
+					            '<div class="weui-cell__ft">' +
+					            	'<a class="weui-swiped-btn weui-swiped-btn_warn delete-swipeout" id="a' + emailacptid + '"' + 
+					            	'style="padding: 30px 10px;" href="#" onclick="del(this, event)">删除</a>' +
+					            '</div>' +
+					        '</div>';
+					    $("#list").append(htmlStr);
+					});
+					var d = new Date();
+					$(".pullDownLabel-time").html("最后更新时间： 今天 "+d.getHours()+":"+d.getMinutes()+":"+d.getSeconds());
+				    $("#loading").hide();
+					$("#loadingmask").hide();
+					$('.weui-cell_swiped').swipeout();
+					regTouchEvent();
+				},
+				error : function (xhr, rtmsg, e) {
+					$("#loading").hide();
+					$("#loadingmask").hide();
+				}
+			});
+		}
+		
+		//注册长按事件
+		var pageX, pageY;
+		var $selectObj = null;
+		var selecting = false;
+		function regTouchEvent() {
+			$(".weui-cell_swiped").children(".weui-cell__bd").on({ 
+		        touchstart: function(e){  
+		        	var touch = e.targetTouches[0];
+		        	$selectObj = $(this);
+		        	pageX = touch.pageX;
+		        	pageY = touch.pageY;
+		            timeOutEvent = setTimeout("longPress()",500);  
+		            e.preventDefault(); 
+		        },  
+		        touchmove: function(){  
+		            clearTimeout(timeOutEvent);   
+		            timeOutEvent = 0;   
+		        },  
+		        touchend: function(e){  
+		            clearTimeout(timeOutEvent);  
+		            if(timeOutEvent!=0){   
+		            	var change = e.changedTouches[0];
+		            	//如果不是长按或者滑动，则为点击事件 
+		            	if (Math.abs(change.pageX - pageX) < 1 && Math.abs(change.pageY - pageY) < 1) {
+		            		if (selecting == true) {
+		            			toggleSelected($(this));
+		            			toggleSelected($(this).parent());
+		            		} else {
+		            			view(this.parentNode, e);
+		            		}
+		            	}
+		            } 
+		        }
+		        
+		    }); 
+		}
+		//长按事件触发
+		function longPress(){   
+			if (selecting == true || timeOutEvent == 0) {
+				return false;
+			}
+		    timeOutEvent = 0;   
+		    $("#menu1").addClass("showSelect");
+		    $("#menu2").removeClass("showSelect");
+		    $(".weui-tabbar").removeClass("showSelect");
+		    $selectObj.addClass("selected");
+		    $selectObj.parent().addClass("selected");
+		    selecting = true;
+		} 
+		//取消选择
+		function cancel() {
+			$("#menu2").addClass("showSelect");
+		    $("#menu1").removeClass("showSelect");
+		    $(".weui-tabbar").addClass("showSelect");
+		    $(".weui-cell_swiped").addClass("selected");
+		    $(".weui-cell_swiped").children(".weui-cell__bd").removeClass("selected");
+		    selecting = false;
+		}
+		//全选
+		function selectAll() {
+			$(".weui-cell_swiped").addClass("selected");
+			$(".weui-cell_swiped").children(".weui-cell__bd").addClass("selected");
+		}
+		
+		//选中或取消选中
+		function toggleSelected($obj) {
+			if ($obj.hasClass("selected")) {
+				$obj.removeClass("selected");
+			} else {
+				$obj.addClass("selected");
+			}
+		}
+		
+		//邮件详情
+		function view(obj, e){ 
+			var emailacptid = obj.id;
+			emailacptid = emailacptid.replace("d", "");
+			window.location.href = 'email_view.html?emailacptid=' + emailacptid;
+			e.stopPropagation();
+		}
+		//删除邮件
+		function del(obj, e) {
+			$.confirm("确定删除邮件?",  function() {
+				$.showLoading("正在删除...");
+				var emailacptid = obj.id;
+				emailacptid = emailacptid.replace("a", "");
+				$.ajax({
+					url : "/api/email/del",
+					type : "POST",
+					async : false,
+					data : {
+						ids:emailacptid,
+						flag:"RECEIVE"
+					},
+					dataType: "json",
+					success : function (retData) {
+						if(retData.rtCode == '0'){
+							$.hideLoading();
+						    $.toast("删除失败", "forbidden");
+						}else{
+							$("#d" + emailacptid).remove();
+							$.hideLoading();
+							$.toast("删除成功", function() {
+		          	
+		        			});
+						}
+					},
+					error : function (xhr, rtmsg, e) {
+						$("#loading").hide();
+						$("#loadingmask").hide();
+					}
+				});
+				
+	        }, function() {
+	          
+	        });
+			e.stopPropagation();
+		}
+		//批量删除
+		function delBatch() {
+			var $selectObjs = $(".weui-cell.weui-cell_swiped.selected");
+			var ids = "";
+			$selectObjs.each(function(index, obj) {
+				if (ids == "") {
+					ids = $(this).attr("id");
+				} else {
+					ids = ids + "," + $(this).attr("id");
+				}
+			});
+			var idsArr = ids.split(",");
+			ids = ids.replace(/d/g, "");
+			if (ids == "") {
+				$.alert("请选择要删除的邮件");
+				return false;
+			}
+			$.confirm("确定删除邮件?",  function() {
+				$.showLoading("正在删除...");
+				$.ajax({
+					url : "/api/email/del",
+					type : "POST",
+					async : false,
+					data : {
+						ids:ids,
+						flag:"RECEIVE"
+					},
+					dataType: "json",
+					success : function (retData) {
+						if(retData.rtCode == '0'){
+							$.hideLoading();
+						    $.toast("删除失败", "forbidden");
+						}else{
+							$.each(idsArr, function(index, obj) {
+								$("#" + obj).remove();
+							});
+							$.hideLoading();
+							$.toast("删除成功", function() {
+		          	
+		        			});
+						}
+					},
+					error : function (xhr, rtmsg, e) {
+						$("#loading").hide();
+						$("#loadingmask").hide();
+					}
+				});
+	        }, function() {
+	          
+	        });
+	        cancel();
+		}
+	</script>
+</html>

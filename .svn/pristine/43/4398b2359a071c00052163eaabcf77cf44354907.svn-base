@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<title>邮件</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui-for-work.min.css">
+		<script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+		<script type="text/javascript" src="https://res.wx.qq.com/open/libs/weuijs/1.1.3/weui.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="/css/searchBox.css">
+	</head>
+	<body>
+		<div id="webHeadContainer_top">
+			<table class="webClientHeadContainer_top">
+				<tbody>
+					<tr>
+						<td class="centerTD_top" width="*">
+							<div id="middleBtnName_top">
+								<div id="middlePageName_top" style="display:inline-block;">邮件</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div id="searchBox" class="searchBox">
+			<div class="searchImg" onclick="queryList();"></div>
+			<div style="position:absolute;left:5px;top:5px;right:10px;height:30px;background:#fff;border-radius:10px;">
+				<div style="position:absolute;top:0;left:0;right:30px;height:30px;">
+					<input id="keyword" type="search" onkeydown="keyDown(event)" class="searchInput" placeholder="输入关键字查找" />
+
+				</div>
+			</div>
+		</div>
+		<div class="weui-panel">
+		    <div class="weui-panel__bd">
+		        <div class="weui-media-box weui-media-box_small-appmsg">
+		            <div class="weui-cells">
+		            	<a class="weui-cell weui-cell_access" href="javascript:newEmail();">
+		                    <div class="weui-cell__hd"><img src="/icons/write2.png" alt="" style="width:20px;margin-right:5px;display:block"></div>
+		                    <div class="weui-cell__bd weui-cell_primary">
+		                        <p>写信</p>
+		                    </div>
+		                    <span class="weui-cell__ft"></span>
+		                </a>
+		            	<a class="weui-cell weui-cell_access" href="javascript:acceptList();">
+		                    <div class="weui-cell__hd"><img src="/icons/unread3.png" alt="" style="width:20px;margin-right:5px;display:block"></div>
+		                    <div class="weui-cell__bd weui-cell_primary">
+		                        <p>未读邮件</p>
+		                    </div>
+		                    <span class="weui-cell__ft" id="unread"></span>
+		                </a>
+		                <a class="weui-cell weui-cell_access" href="javascript:receiveList();">
+		                    <div class="weui-cell__hd"><img src="/icons/inbox1.png" alt="" style="width:20px;margin-right:5px;display:block"></div>
+		                    <div class="weui-cell__bd weui-cell_primary">
+		                        <p>收件箱</p>
+		                    </div>
+		                    <span class="weui-cell__ft"></span>
+		                </a>
+		                <a class="weui-cell weui-cell_access" href="javascript:sendList();">
+		                    <div class="weui-cell__hd"><img src="/icons/send1.png" alt="" style="width:20px;margin-right:5px;display:block"></div>
+		                    <div class="weui-cell__bd weui-cell_primary">
+		                        <p>已发送</p>
+		                    </div>
+		                    <span class="weui-cell__ft"></span>
+		                </a>
+		                <a class="weui-cell weui-cell_access" href="javascript:draftList();">
+		                    <div class="weui-cell__hd"><img src="/icons/draft2.png" alt="" style="width:20px;margin-right:5px;display:block"></div>
+		                    <div class="weui-cell__bd weui-cell_primary">
+		                        <p>草稿箱</p>
+		                    </div>
+		                    <span class="weui-cell__ft"></span>
+		                </a>
+		                <a class="weui-cell weui-cell_access" href="javascript:delList();">
+		                    <div class="weui-cell__hd"><img src="/icons/delete1.png" alt="" style="width:20px;margin-right:5px;display:block"></div>
+		                    <div class="weui-cell__bd weui-cell_primary">
+		                        <p>已删除</p>
+		                    </div>
+		                    <span class="weui-cell__ft"></span>
+		                </a>
+		            </div>
+		        </div>
+		    </div>
+		</div>
+	</body>
+	<script type="text/javascript">
+	
+		window.onload = function() {
+			getUnreadCount();
+		};
+		
+		function getUnreadCount() {
+			$.ajax({
+				url : "/api/email/count",
+				type : "POST",
+				async : true,
+				data : {},
+				success : function (retData) {
+					var retObj = $.parseJSON(retData);
+					var count = retObj.bizdata.unreadnum;
+					if (count > 0) {
+						$("#unread").html('<span class="weui-badge" id="unread">' + count + '</span>');
+					}
+				},
+				error : function (xhr, rtmsg, e) {
+				}
+			});
+			
+		}
+		
+		function keyDown(e) {
+			var ev= window.event||e;
+			if (ev.keyCode == 13){
+				queryList();
+			}
+		}
+		
+		function queryList() {
+			var keyword = $id("keyword").value;
+			if ( !keyword ) {
+				$.alert("请输入关键字");
+				return;
+			}
+			window.location.href = "email_list4Query.html?keyword=" + keyword;
+		}
+		
+		//写信
+		function newEmail() {
+			window.location.href = "email_new.html";
+		}
+		//未读邮件
+		function acceptList() {
+			window.location.href = "email_list4Accept.html";
+		}
+		//收件箱
+		function receiveList() {
+			window.location.href = "email_list4Received.html";
+		}
+		//已发送
+		function sendList() {
+			window.location.href = "email_list4Sended.html";
+		}
+		//草稿箱
+		function draftList() {
+			window.location.href = "email_list4Draft.html";
+		}
+		//已删除
+		function delList() {
+			window.location.href = "email_list4Del.html";
+		}
+	</script>
+</html>

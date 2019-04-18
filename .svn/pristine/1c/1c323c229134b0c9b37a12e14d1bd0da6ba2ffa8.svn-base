@@ -1,0 +1,154 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <groupId>com.tr</groupId>
+  <artifactId>qywx</artifactId>
+  <packaging>war</packaging>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>qywx</name>
+  
+  <!-- 1、设置Spring boot的parent -->  
+  <parent>  
+      <groupId>org.springframework.boot</groupId>  
+      <artifactId>spring-boot-starter-parent</artifactId>  
+      <version>1.5.6.RELEASE</version>  
+  </parent> 
+  
+  <properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.7</java.version>
+		<jwt.version>0.6.0</jwt.version>
+  </properties>
+  
+  <dependencies>
+  	<dependency>  
+        <groupId>org.springframework.boot</groupId>  
+        <artifactId>spring-boot-starter</artifactId>  
+    </dependency>  
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <!-- 移除嵌入式tomcat插件
+		<exclusions>
+    		<exclusion>
+        		<groupId>org.springframework.boot</groupId>
+        		<artifactId>spring-boot-starter-tomcat</artifactId>
+    		</exclusion>
+		</exclusions>
+		-->
+    </dependency>
+    <dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+		<scope>provided</scope>
+	</dependency> 
+	<!-- Spring Boot Aop 依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+	
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-test</artifactId>
+		<scope>test</scope>
+	</dependency>
+	
+	<dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+          <version>3.4</version>
+    </dependency>
+    <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.5</version>
+  	</dependency>
+    <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.9</version>
+    </dependency>
+    <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.3.1</version>
+    </dependency>
+    <dependency>
+        <groupId>dom4j</groupId>
+        <artifactId>dom4j</artifactId>
+    </dependency>
+    <dependency>
+		<groupId>com.thoughtworks.xstream</groupId>
+		<artifactId>xstream</artifactId>
+		<version>1.4.9</version>
+	</dependency>
+	<dependency>  
+	    <groupId>com.google.code.gson</groupId>  
+	    <artifactId>gson</artifactId>  
+	</dependency>
+    <!-- 连接数据库 -->
+    <dependency>
+    	<groupId>mysql</groupId>
+    	<artifactId>mysql-connector-java</artifactId>
+  	</dependency>
+	<!-- dbcp 连接池引入 -->
+    <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>commons-pool</groupId>
+        <artifactId>commons-pool</artifactId>
+    </dependency>
+	<!-- 集成Mybatis -->        
+    <dependency>
+    	<groupId>org.mybatis.spring.boot</groupId>
+    	<artifactId>mybatis-spring-boot-starter</artifactId>
+    	<version>1.1.1</version>
+  	</dependency>
+  	<!-- 启用以下jar包，则默认开启数据库了连接池 -->
+   	<dependency>
+       	<groupId>org.springframework.boot</groupId>
+       	<artifactId>spring-boot-starter-jdbc</artifactId>
+   	</dependency>
+	<dependency>
+	    <groupId>org.apache.logging.log4j</groupId>
+	    <artifactId>log4j-core</artifactId>
+	</dependency>
+	<!-- 热部署 -->
+	<dependency>
+	 <groupId>org.springframework.boot</groupId>
+	 <artifactId>spring-boot-devtools</artifactId>
+	 <optional>true</optional> 
+	</dependency>
+  </dependencies>  
+    
+  <build>  
+       <plugins>  
+           <plugin>  
+               <artifactId>maven-compiler-plugin</artifactId>  
+               <configuration>  
+                   <source>1.8</source>  
+                   <target>1.8</target>  
+               </configuration>  
+           </plugin>  
+           <!-- 3、添加Spring boot的插件 -->  
+           <plugin>  
+               <groupId>org.springframework.boot</groupId>  
+               <artifactId>spring-boot-maven-plugin</artifactId>  
+           </plugin>  
+           <plugin>  
+               <groupId>org.mybatis.generator</groupId>  
+               <artifactId>mybatis-generator-maven-plugin</artifactId>  
+               <version>1.3.2</version>  
+               <configuration>  
+                   <verbose>true</verbose>  
+                   <overwrite>true</overwrite>  
+               </configuration>  
+           </plugin> 
+        </plugins>  
+    </build>
+</project>

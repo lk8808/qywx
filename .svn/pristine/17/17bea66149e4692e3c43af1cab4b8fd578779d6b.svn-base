@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="//res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+		<script type="text/javascript" src="https://res.wx.qq.com/open/libs/weuijs/1.1.3/weui.min.js"></script>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+		<style type="text/css">
+			.hid {
+				display: none
+			}
+		</style>
+	</head>
+	<body>
+		<div class="weui-tab">
+		    <div class="weui-navbar">
+		        <div id="bar1" class="weui-navbar__item weui-bar__item_on">
+		            详细信息
+		        </div>
+		        <div id="bar2" class="weui-navbar__item">
+		            审批意见
+		        </div>
+		    </div>
+		    <div class="weui-tab__panel">
+		        <div id="tab1" >
+		        	<div class="weui-cells__title" align="center">业务单据详情</div>
+					<div class="weui-cells" id="bizdata">
+					    
+					</div>
+					<div class="weui-cells__title" align="center">附件</div>
+					<div class="weui-media-box" id=attaches>
+	        	
+	        		</div>
+	        		<div class="weui-cells__title dets hid" align="center" >明细</div>
+	        		<div class="dets hid" id="dets">
+		        		
+		        	</div>
+				</div>
+				<div id="tab2" style="display:none">
+					
+				</div>
+		    </div>
+		</div>
+	</body>
+	<script type="text/javascript">
+	
+		var tmps;
+	
+		$(function() {
+			init();
+			loadData();
+		});
+		
+		function init() {
+			var paramstr = location.search;
+			tmps = {};
+			if (paramstr.indexOf('?' != -1)) {
+				var paramstr = paramstr.substr(1);
+				var strArr = paramstr.split('&');
+				$.each(strArr, function(index, str) {
+					tmps[str.split('=')[0]] = str.split('=')[1]
+				});
+			}
+		}
+	
+		function loadData() {
+			var param = {
+					processinstid: tmps.processinstid || 0
+				}
+			$.ajax({
+				url: '/api/getbizdata',
+				asycn: 'true',
+				type: 'POST',
+				contentType: 'application/json;charset=urf-8',
+				data: JSON.stringify(param),
+				dataType: 'JSON',
+				success: function(retData) {
+					var props = retData.bizdata.props;
+					var dets = retData.bizdata.dets;
+					var docs = retData.bizdata.docs;
+					var checktasks = retData.bizdata.checktasks;
+					//初始化详情
+					addItem(props);
+					//存在明细
+					if (dets) {
+						$(".dets").removeClass("hid");
+						addDetItem(dets);
+					} 
+					//初始化附件
+					addDocs(docs);
+					//初始化审批意见
+					addChecktasks(checktasks);
+				},
+				error: function(xhr, rtmsg, e) {
+				}
+			});
+		}
+		
+		function addItem(props) {
+			var htmlStr = 
+				'<div class="weui-form-preview">' + 
+					'<div class="weui-form-preview__bd">';
+			$.each(props, function(index, prop) {
+				htmlStr = htmlStr +
+    				'<div class="weui-form-preview__item">' +
+				      '<label class="weui-form-preview__label">' + prop.desc + '：</label>' +
+				      '<span class="weui-form-preview__value" style="float: left">' + prop.val + '</span>' +
+				    '</div>';
+			});	
+			htmlStr = htmlStr + 
+					'</div>' +
+        		'</div>';
+			$("#bizdata").append(htmlStr);
+		}
+		
+		function addDetItem(dets) {
+			$.each(dets, function(index, det) {
+				var props = det;
+				var htmlStr = 
+					'<div class="weui-form-preview">' + 
+    					'<div class="weui-form-preview__bd">';
+    			$.each(props, function(index1, prop) {
+    				htmlStr = htmlStr +
+	    				'<div class="weui-form-preview__item">' +
+					      '<label class="weui-form-preview__label">' + prop.desc + '：</label>' +
+					      '<span class="weui-form-preview__value" style="float: left">' + prop.val + '</span>' +
+					    '</div>';
+    			});	
+    			htmlStr = htmlStr + 
+    					'</div>' +
+	        		'</div>';
+    			$("#dets").append(htmlStr);
+			});
+		}
+		
+		function addDocs(docs) {
+			var downloadapi = "/api/download";
+			$.each(docs, function(index, doc) {
+				var downloadurl = downloadapi + "?filepath=" + doc.filepath + "&filename=" + doc.filename;
+				downloadurl = encodeURI(downloadurl);
+				var htmlStr = 
+					'<a href="' + downloadurl+ '" download="' + doc.filename + '">' +
+						doc.filename +
+					'</a><br>';
+				$("#attaches").append(htmlStr);
+			});
+		}
+		
+		function addChecktasks(checktasks) {
+			$.each(checktasks, function(index, checktask) {
+				var htmlStr = 
+					'<div class="weui-form-preview">' + 
+    					'<div class="weui-form-preview__bd">' +
+		    				'<div class="weui-form-preview__item">' +
+						      '<label class="weui-form-preview__label">任务名称：</label>' +
+						      '<span class="weui-form-preview__value" style="float: left">' + checktask.workitemname + '</span>' +
+						    '</div>' +
+						    '<div class="weui-form-preview__item">' +
+						      '<label class="weui-form-preview__label">审批意见：</label>' +
+						      '<span class="weui-form-preview__value" style="float: left">' + checktask.advice + '</span>' +
+						    '</div>' +
+						    '<div class="weui-form-preview__item">' +
+						      '<label class="weui-form-preview__label">审批结果：</label>' +
+						      '<span class="weui-form-preview__value" style="float: left">' + checktask.isagree + '</span>' +
+						    '</div>' +
+						    '<div class="weui-form-preview__item">' +
+						      '<label class="weui-form-preview__label">审批人：</label>' +
+						      '<span class="weui-form-preview__value" style="float: left">' + checktask.creator + '</span>' +
+						    '</div>' +
+						    '<div class="weui-form-preview__item">' +
+						      '<label class="weui-form-preview__label">审批时间：</label>' +
+						      '<span class="weui-form-preview__value" style="float: left">' + (checktask.createtime).substring(0, 19) + '</span>' +
+						    '</div>' +
+						    '<div class="weui-form-preview__item">' +
+						      '<label class="weui-form-preview__label">电子签章：</label>' +
+						      '<img style="float: left" src="data:image/png;base64,' + checktask.esignstr + '">' + 
+						    '</div>' +
+    					'</div>' +
+	        		'</div>';
+    			$("#tab2").append(htmlStr);
+			});
+		}
+	
+		//tab切换
+		$(".weui-navbar__item").click(function() {
+			$(".weui-bar__item_on").removeClass("weui-bar__item_on");
+			$(this).addClass("weui-bar__item_on");
+			var barid = $(this).attr("id");
+			var tabid = "tab" + barid.substring(3);
+			$(".weui-tab__panel > div").css("display", "none");
+			$("#" + tabid).css("display", "inline");
+		});
+	</script>
+</html>
